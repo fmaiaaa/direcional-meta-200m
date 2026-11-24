@@ -262,7 +262,7 @@ def money(value):
 
 def main():
     assets = Path(__file__).parent / "assets"
-    st.set_page_config(page_title="Direcional | Meta 200 milhões", page_icon=str(assets / "simbolo_direcional.png"), layout="wide")
+    st.set_page_config(page_title="Campanhas Direcional RJ", page_icon=str(assets / "simbolo_direcional.png"), layout="wide")
     background = base64.b64encode((assets / "fundo_residencial.jpg").read_bytes()).decode()
     st.markdown(f'<style>.stApp::before{{background-image:url("data:image/jpeg;base64,{background}")}}</style>', unsafe_allow_html=True)
     st.markdown("""<style>
