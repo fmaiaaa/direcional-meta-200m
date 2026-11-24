@@ -219,39 +219,51 @@ def main():
     background = base64.b64encode((assets / "fundo_residencial.jpg").read_bytes()).decode()
     st.markdown(f'<style>.stApp::before{{background-image:url("data:image/jpeg;base64,{background}")}}</style>', unsafe_allow_html=True)
     st.markdown("""<style>
+    html,body,.stApp,[data-testid="stAppViewContainer"],
+    [data-testid="stMain"]{height:100%;overflow:hidden!important}
     .stApp{background:#fff;color:#12345a;color-scheme:light}
     .stApp::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.34;
     background-repeat:no-repeat;background-size:cover;background-position:center;z-index:0}
     [data-testid="stAppViewContainer"]{position:relative;z-index:1;background:transparent}
-    [data-testid="stHeader"],header[data-testid="stHeader"]{background:transparent!important;box-shadow:none!important}
-    [data-testid="stToolbar"]{background:transparent!important}
-    [data-testid="stAppViewContainer"]>.main{background:transparent}
-    .block-container{background:rgba(255,255,255,.64);border-radius:24px;margin-top:12px}
-    .block-container{max-width:1400px;padding-top:2rem;padding-bottom:2rem}
-    .brand{display:flex;justify-content:center;margin-bottom:28px}
-    .brand img{width:min(310px,70vw);height:auto;background:transparent;padding:0;box-sizing:border-box}
-    .remaining{background:linear-gradient(120deg,rgba(7,53,104,.96),rgba(8,69,137,.96) 75%,rgba(22,92,164,.96));
-    border-radius:20px;padding:32px 38px;margin:20px 0 24px;
-    box-shadow:0 14px 36px #07356822;border-left:7px solid #cf0035;color:white}
-    .remaining-label{font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:#d9e8fa}
-    .remaining-value{font-size:clamp(2.2rem,5vw,4.2rem);font-weight:750;line-height:1.3;margin-top:8px}
-    [data-testid="stMetric"]{background:rgba(255,255,255,.72);border:1px solid rgba(176,195,217,.6);
-    border-radius:14px;padding:22px;min-height:135px;box-shadow:0 4px 16px #07356808}
-    [data-testid="stMetricValue"]{color:#084589;font-size:clamp(1.4rem,2.4vw,2rem)}
-    [data-testid="stMetricLabel"]{color:#334a65}
-    [data-testid="stText"]{color:#aebbd0}
-    .pace{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
-    margin:0 0 28px;font-size:clamp(.85rem,1.7vw,1.1rem);color:#334a65}
-    .pace strong{color:#084589;margin-left:8px;white-space:nowrap}
-    .goal-progress-label{text-align:right;color:#084589;font-weight:650;margin-bottom:8px}
-    .goal-track{height:18px;border-radius:100px;background:rgba(211,222,235,.8);overflow:hidden;margin-bottom:24px}
-    .goal-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#084589 0%,#cf0035 100%)}
-    .stButton button{border-radius:12px;background:#084589;border:0;min-height:34px;height:34px;padding:3px 12px;font-weight:650}
+    [data-testid="stHeader"],[data-testid="stToolbar"]{background:transparent!important;box-shadow:none!important}
+    [data-testid="stHeader"]{pointer-events:none;opacity:0}
+    .block-container{max-width:1400px;width:90vw;height:100dvh;min-height:0;
+    padding:3vh 2vw!important;margin:0 auto!important;background:transparent;
+    border:0;border-radius:0;box-shadow:none}
+    [data-testid="stVerticalBlock"]{gap:0!important}
+    [data-testid="stElementContainer"]:has(style){display:none}
+    .tv-dashboard{height:calc(94dvh - 40px);display:grid;min-height:0;
+    grid-template-rows:1fr 1.1fr 1.9fr .8fr .65fr;gap:1vh}
+    .brand{display:flex;justify-content:center;align-items:center;min-height:0}
+    .brand img{max-width:30vw;max-height:9vh;width:auto;height:auto;object-fit:contain}
+    .totals{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:3vw;text-align:center}
+    .stat-label{font-size:clamp(14px,2.3vh,28px);color:#334a65;line-height:1.2}
+    .stat-value{font-size:clamp(22px,4.3vh,52px);color:#084589;font-weight:650;white-space:nowrap}
+    .remaining{display:flex;flex-direction:column;justify-content:center;text-align:center;
+    background:transparent;border:0;box-shadow:none;padding:0;min-height:0}
+    .remaining-label{font-size:clamp(16px,2.6vh,32px);letter-spacing:.08em;text-transform:uppercase;color:#084589}
+    .remaining-value{font-size:clamp(32px,8vh,100px);font-weight:750;line-height:1.2;
+    color:#084589;white-space:nowrap;text-shadow:0 2px 20px #ffffffb0}
+    .pace{display:flex;justify-content:space-between;align-items:center;gap:2vw;
+    font-size:clamp(12px,2.5vh,30px);color:#334a65}
+    .pace strong{color:#084589;margin-left:10px;white-space:nowrap}
+    .goal-progress-label{text-align:right;color:#084589;font-weight:650;
+    font-size:clamp(12px,2vh,24px);margin-bottom:.8vh}
+    .goal-track{height:1.8vh;min-height:8px;border-radius:100px;background:rgba(211,222,235,.8);overflow:hidden}
+    .goal-fill{position:relative;height:100%;border-radius:100px;
+    background:linear-gradient(90deg,#084589 0%,#cf0035 100%);overflow:hidden}
+    .goal-fill::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(100deg,transparent 25%,#ffffff38 50%,transparent 75%);
+    transform:translateX(-100%);animation:progress-shimmer 12s ease-in-out infinite}
+    @keyframes progress-shimmer{0%,65%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+    @media(prefers-reduced-motion:reduce){.goal-fill::after{animation:none;display:none}}
+    .stButton button{border-radius:9px;background:#084589;color:white;border:0;
+    min-height:30px;height:30px;padding:2px 12px;font-weight:650}
     .stButton button:hover{background:#073568;color:white}
-    @media(max-width:640px){.remaining{padding:25px 20px}.block-container{padding-top:1rem}}
+    @media(max-width:640px){.pace{font-size:2.2vw}.stat-value{font-size:4.2vw}
+    .remaining-value{font-size:7vw}.brand img{max-width:50vw}}
     </style>""", unsafe_allow_html=True)
     logo = base64.b64encode((assets / "logo_direcional.png").read_bytes()).decode()
-    st.markdown(f'<div class="brand"><img src="data:image/png;base64,{logo}" alt="Direcional"></div>', unsafe_allow_html=True)
     try:
         credentials = st.secrets["salesforce"]
         user, password, token = (str(credentials.get(key, "")) for key in ("USER", "PASSWORD", "TOKEN"))
@@ -271,21 +283,27 @@ def main():
     except Exception:
         st.error("Não foi possível validar o retorno do Salesforce. Tente atualizar novamente.")
         st.stop()
-    row = st.columns(2)
-    row[0].metric("Meta", money(GOAL))
-    row[1].metric("Realizado", money(realized))
-    st.markdown(f'<div class="remaining"><div class="remaining-label">Meta a Atingir</div>'
-                f'<div class="remaining-value">{money(remaining)}</div></div>', unsafe_allow_html=True)
     daily_label = money(daily) if daily is not None else "Prazo encerrado"
-    st.markdown(f'<div class="pace"><span>Dias para 2027<strong>{days}</strong></span>'
-                f'<span>Meta Diária<strong>{daily_label}</strong></span></div>', unsafe_allow_html=True)
     progress = float(realized / GOAL)
     percent = f"{progress:.2%}".replace(".", ",")
     width = min(100.0, max(0.0, progress * 100))
-    st.markdown(f'<div class="goal-progress-label">{percent} da meta</div>'
-                f'<div class="goal-track" role="progressbar" aria-label="Percentual da meta atingido" '
-                f'aria-valuemin="0" aria-valuemax="100" aria-valuenow="{width:.2f}">'
-                f'<div class="goal-fill" style="width:{width:.4f}%"></div></div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="tv-dashboard">'
+        f'<div class="brand"><img src="data:image/png;base64,{logo}" alt="Direcional"></div>'
+        f'<div class="totals"><div><div class="stat-label">Meta</div>'
+        f'<div class="stat-value">{money(GOAL)}</div></div>'
+        f'<div><div class="stat-label">Realizado</div>'
+        f'<div class="stat-value">{money(realized)}</div></div></div>'
+        f'<div class="remaining"><div class="remaining-label">Meta a Atingir</div>'
+        f'<div class="remaining-value">{money(remaining)}</div></div>'
+        f'<div class="pace"><span>Dias para 2027<strong>{days}</strong></span>'
+        f'<span>Meta Diária<strong>{daily_label}</strong></span></div>'
+        f'<div><div class="goal-progress-label">{percent} da meta</div>'
+        f'<div class="goal-track" role="progressbar" aria-label="Percentual da meta atingido" '
+        f'aria-valuemin="0" aria-valuemax="100" aria-valuenow="{width:.2f}">'
+        f'<div class="goal-fill" style="width:{width:.4f}%"></div></div></div></div>',
+        unsafe_allow_html=True,
+    )
     st.button("Atualizar Salesforce", type="primary", use_container_width=True,
               on_click=fetch_sales.clear)
 
