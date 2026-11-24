@@ -213,51 +213,40 @@ def money(value):
     return "R$ " + f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-def building_pattern():
-    """Decorative repeating apartment towers, rendered locally without requests."""
-    towers = []
-    for x, y, width, height in [(20, 100, 100, 260), (155, 40, 115, 320),
-                               (305, 130, 100, 230), (440, 70, 115, 290)]:
-        towers.append(f'<rect x="{x}" y="{y}" width="{width}" height="{height}" rx="2" '
-                      'fill="#35455a" stroke="#a8b9d0" stroke-width="2"/>')
-        for floor in range(y + 18, 345, 26):
-            for window in range(x + 13, x + width - 10, 23):
-                towers.append(f'<rect x="{window}" y="{floor}" width="10" height="13" fill="#a8b9d0"/>')
-    svg = '<svg xmlns="http://www.w3.org/2000/svg" width="580" height="390" viewBox="0 0 580 390">' + ''.join(towers) + '</svg>'
-    return base64.b64encode(svg.encode()).decode()
-
-
 def main():
     assets = Path(__file__).parent / "assets"
     st.set_page_config(page_title="Direcional | Meta 200 milhões", page_icon=str(assets / "simbolo_direcional.png"), layout="wide")
-    background = building_pattern()
-    st.markdown(f'<style>.stApp::before{{background-image:url("data:image/svg+xml;base64,{background}")}}</style>', unsafe_allow_html=True)
+    background = base64.b64encode((assets / "fundo_residencial.jpg").read_bytes()).decode()
+    st.markdown(f'<style>.stApp::before{{background-image:url("data:image/jpeg;base64,{background}")}}</style>', unsafe_allow_html=True)
     st.markdown("""<style>
-    .stApp{background:#000;color:#edf2fa;color-scheme:dark}
-    .stApp::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.08;
-    background-repeat:repeat;background-size:580px 390px;z-index:0}
+    .stApp{background:#fff;color:#12345a;color-scheme:light}
+    .stApp::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.34;
+    background-repeat:no-repeat;background-size:cover;background-position:center;z-index:0}
     [data-testid="stAppViewContainer"]{position:relative;z-index:1;background:transparent}
-    [data-testid="stHeader"]{background:transparent}
+    [data-testid="stHeader"],header[data-testid="stHeader"]{background:transparent!important;box-shadow:none!important}
+    [data-testid="stToolbar"]{background:transparent!important}
+    [data-testid="stAppViewContainer"]>.main{background:transparent}
+    .block-container{background:rgba(255,255,255,.64);border-radius:24px;margin-top:12px}
     .block-container{max-width:1400px;padding-top:2rem;padding-bottom:2rem}
     .brand{display:flex;justify-content:center;margin-bottom:28px}
-    .brand img{width:min(310px,70vw);height:auto;background:white;border-radius:12px;padding:12px 20px;box-sizing:content-box}
+    .brand img{width:min(310px,70vw);height:auto;background:transparent;padding:0;box-sizing:border-box}
     .remaining{background:linear-gradient(120deg,rgba(7,53,104,.96),rgba(8,69,137,.96) 75%,rgba(22,92,164,.96));
     border-radius:20px;padding:32px 38px;margin:20px 0 24px;
     box-shadow:0 14px 36px #07356822;border-left:7px solid #cf0035;color:white}
     .remaining-label{font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:#d9e8fa}
     .remaining-value{font-size:clamp(2.2rem,5vw,4.2rem);font-weight:750;line-height:1.3;margin-top:8px}
-    [data-testid="stMetric"]{background:rgba(17,21,29,.96);border:1px solid #303b4a;
+    [data-testid="stMetric"]{background:rgba(255,255,255,.72);border:1px solid rgba(176,195,217,.6);
     border-radius:14px;padding:22px;min-height:135px;box-shadow:0 4px 16px #07356808}
-    [data-testid="stMetricValue"]{color:#fff;font-size:clamp(1.4rem,2.4vw,2rem)}
-    [data-testid="stMetricLabel"]{color:#c5d0df}
+    [data-testid="stMetricValue"]{color:#084589;font-size:clamp(1.4rem,2.4vw,2rem)}
+    [data-testid="stMetricLabel"]{color:#334a65}
     [data-testid="stText"]{color:#aebbd0}
     .pace{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
-    margin:0 0 28px;font-size:clamp(.85rem,1.7vw,1.1rem);color:#c5d0df}
-    .pace strong{color:#fff;margin-left:8px;white-space:nowrap}
-    .goal-progress-label{text-align:right;color:#edf2fa;font-weight:650;margin-bottom:8px}
-    .goal-track{height:18px;border-radius:100px;background:#202633;overflow:hidden;margin-bottom:24px}
+    margin:0 0 28px;font-size:clamp(.85rem,1.7vw,1.1rem);color:#334a65}
+    .pace strong{color:#084589;margin-left:8px;white-space:nowrap}
+    .goal-progress-label{text-align:right;color:#084589;font-weight:650;margin-bottom:8px}
+    .goal-track{height:18px;border-radius:100px;background:rgba(211,222,235,.8);overflow:hidden;margin-bottom:24px}
     .goal-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#084589 0%,#cf0035 100%)}
-    .stButton button{border-radius:12px;background:#084589;border:0;min-height:52px;font-weight:650}
+    .stButton button{border-radius:12px;background:#084589;border:0;min-height:34px;height:34px;padding:3px 12px;font-weight:650}
     .stButton button:hover{background:#073568;color:white}
     @media(max-width:640px){.remaining{padding:25px 20px}.block-container{padding-top:1rem}}
     </style>""", unsafe_allow_html=True)
@@ -297,12 +286,11 @@ def main():
                 f'<div class="goal-track" role="progressbar" aria-label="Percentual da meta atingido" '
                 f'aria-valuemin="0" aria-valuemax="100" aria-valuenow="{width:.2f}">'
                 f'<div class="goal-fill" style="width:{width:.4f}%"></div></div>', unsafe_allow_html=True)
-    st.text(f"01/09/2026 a 31/12/2026 · Data Confirmação Venda 2.0 · Valor Real de Venda\n"
-            f"{len(records)} vendas · Atualizado em {updated} · Dias restantes incluem hoje ({today:%d/%m/%Y})")
     st.button("Atualizar Salesforce", type="primary", use_container_width=True,
               on_click=fetch_sales.clear)
 
 
 if __name__ == "__main__":
     main()
+
 
