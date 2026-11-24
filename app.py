@@ -284,7 +284,7 @@ def main():
     .brand{display:flex;justify-content:center;align-items:center;min-height:0}
     .brand img{max-width:30vw;max-height:9vh;width:auto;height:auto;object-fit:contain}
     .totals{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:3vw;text-align:center}
-    .totals>div{background:rgba(255,255,255,.65);border:0;border-radius:12px;
+    .totals>div{background:transparent;border:0;border-radius:0;
     padding:.8vh 1vw;box-shadow:none}
     .stat-label{font-size:clamp(14px,2.3vh,28px);color:#334a65;line-height:1.2}
     .stat-value{font-size:clamp(22px,4.3vh,52px);color:#084589;font-weight:650;white-space:nowrap;
@@ -298,7 +298,7 @@ def main():
     background:transparent;border:0;padding:0;margin-top:.6vh;box-shadow:none}
     .pace{display:flex;justify-content:space-between;align-items:center;gap:2vw;
     font-size:clamp(12px,2.5vh,30px);color:#334a65}
-    .pace>span{background:rgba(255,255,255,.65);border:0;border-radius:10px;
+    .pace>span{background:transparent;border:0;border-radius:0;
     padding:.8vh 1vw;flex:1;text-align:center;box-shadow:none}
     .pace strong{display:inline-block;color:#084589;margin-left:10px;white-space:nowrap;
     background:transparent;border:0;padding:0;box-shadow:none}
