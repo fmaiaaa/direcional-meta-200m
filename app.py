@@ -7,9 +7,10 @@ PASSWORD = ""
 TOKEN = ""
 
 Only Streamlit and Python's standard library are required. The official report's
-business filters are preserved; only its date field and reporting period change.
+business filters and date scope are translated to paginated SOQL, avoiding the
+report execution quota. Period date = confirmation 2.0, falling back to sale date
+when confirmation is empty, matching the source sheet's Data Corrigida formula.
 """
-from calendar import monthrange
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 import json
@@ -18,14 +19,14 @@ from pathlib import Path
 import socket
 import time
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 from xml.sax.saxutils import escape
 
 import streamlit as st
 
-REPORT = "00O3Z000005ZsPmUAK"
+REPORT = "00OU600000MquCjMAJ"
 VERSION = "59.0"
 START = date(2026, 9, 1)
 DEADLINE = date(2027, 1, 1)
@@ -41,13 +42,17 @@ class DataError(Exception):
 
 
 class ApiError(DataError):
-    def __init__(self, status, quota=False):
-        self.status = status
-        self.quota = quota
-        super().__init__(
-            "O Salesforce recusou a consulta. Confira o acesso ao relatório e tente novamente."
-            if status in (401, 403) else "O Salesforce não concluiu a consulta. Tente novamente."
-        )
+    def __init__(self, status, code="", quota=False):
+        self.status, self.code, self.quota = status, code, quota
+        if quota:
+            message = "O Salesforce atingiu o limite de consultas. Aguarde a renovação da cota e atualize."
+        elif code == "INVALID_SESSION_ID" or status == 401:
+            message = "A sessão do Salesforce expirou. Tente atualizar novamente."
+        elif status == 403:
+            message = "O usuário Salesforce não tem permissão para esta consulta ou campo. Confira o perfil de acesso à API."
+        else:
+            message = "O Salesforce não concluiu a consulta. Tente novamente."
+        super().__init__(message)
 
 
 def transport(url, headers, payload=None, xml=False):
@@ -60,11 +65,18 @@ def transport(url, headers, payload=None, xml=False):
             return raw if xml else json.loads(raw)
         except HTTPError as exc:
             raw = exc.read().decode("utf-8", errors="replace")
-            quota = "limit" in raw.lower() and ("synchronous" in raw.lower() or "60" in raw)
+            try:
+                details = json.loads(raw)
+                code = details[0].get("errorCode", "") if isinstance(details, list) and details else ""
+            except (ValueError, AttributeError):
+                code = ""
+            quota = code in {"REQUEST_LIMIT_EXCEEDED", "REPORT_LIMIT_EXCEEDED"} or (
+                "500" in raw and "60" in raw
+            )
             if exc.code in (429, 502, 503, 504) and attempt < 2:
                 time.sleep(2 ** attempt)
                 continue
-            raise ApiError(exc.code, quota) from None
+            raise ApiError(exc.code, code, quota) from None
         except (URLError, socket.timeout, TimeoutError):
             if attempt < 2:
                 time.sleep(2 ** attempt)
@@ -76,6 +88,7 @@ def transport(url, headers, payload=None, xml=False):
 
 class Salesforce:
     def __init__(self, user, password, token):
+        self._credentials = (user, password, token)
         envelope = (
             '<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/" '
             'xmlns:urn="urn:partner.soap.sforce.com"><env:Body><urn:login>'
@@ -103,29 +116,32 @@ class Salesforce:
             raise DataError("Não foi possível autenticar no Salesforce. Confira USER, PASSWORD e TOKEN nos secrets.") from None
 
     def read(self, path, payload=None):
-        return transport(self.base + path, self.headers, payload)
-
-    def report(self, metadata):
-        path = f"analytics/reports/{REPORT}"
-        payload = {"reportMetadata": metadata}
         try:
-            return self.read(path + "?includeDetails=true", payload)
+            return transport(self.base + path, self.headers, payload)
         except ApiError as exc:
-            if not exc.quota:
+            if exc.code != "INVALID_SESSION_ID":
                 raise
-        instance = self.read(path + "/instances?includeDetails=true", payload)
-        instance_id = instance.get("id", "")
-        if not instance_id or not instance_id.isalnum():
-            raise DataError("Não foi possível iniciar o relatório assíncrono.")
-        until = time.monotonic() + 90
-        while time.monotonic() < until:
-            result = self.read(path + "/instances/" + instance_id)
-            if result.get("status") == "Success":
-                return result
-            if result.get("status") in ("Error", "Failed"):
-                raise DataError("O Salesforce não conseguiu executar o relatório.")
-            time.sleep(2)
-        raise DataError("O relatório ainda está sendo processado. Tente atualizar em alguns minutos.")
+            self.__init__(*self._credentials)
+            return transport(self.base + path, self.headers, payload)
+
+    def query(self, soql):
+        page = self.read("query?q=" + quote(soql, safe=""))
+        records = []
+        expected = page.get("totalSize")
+        seen_pages = set()
+        while True:
+            records.extend(page.get("records", []))
+            if page.get("done") is True:
+                break
+            next_url = page.get("nextRecordsUrl", "")
+            prefix = f"/services/data/v{VERSION}/query/"
+            if not next_url.startswith(prefix) or next_url in seen_pages:
+                raise DataError("O Salesforce retornou uma paginação inválida.")
+            seen_pages.add(next_url)
+            page = self.read(next_url.split(f"/services/data/v{VERSION}/", 1)[1])
+        if expected != len(records):
+            raise DataError("A consulta retornou dados incompletos. O total não será exibido parcialmente.")
+        return records
 
 
 def amount(cell):
@@ -144,58 +160,89 @@ def amount(cell):
         raise DataError("Há vendas sem Valor Real de Venda válido. Corrija o cadastro antes de somar.") from None
 
 
-def extract_period(sf, metadata, first, last):
-    columns = list(dict.fromkeys(metadata["detailColumns"] + [ID_FIELD, DATE_FIELD, VALUE_FIELD]))
-    period = {**metadata, "detailColumns": columns,
-              "standardDateFilter": {**metadata.get("standardDateFilter", {}),
-                  "column": DATE_FIELD, "durationValue": "CUSTOM",
-                  "startDate": first.isoformat(), "endDate": last.isoformat()}}
-    result = sf.report(period)
-    fact = result.get("factMap", {}).get("T!T", {})
-    rows = fact.get("rows", [])
+def sql_value(value):
+    return "'" + str(value).replace("\\", "\\\\").replace("'", "\\'") + "'"
+
+
+def report_where(metadata):
+    """Fail closed on report features without a verified SOQL equivalent."""
+    blocks = metadata.get("blocks")
+    if blocks:
+        if len(blocks) != 1:
+            raise DataError("O relatório mudou para vários blocos. Revise os filtros antes de somar.")
+        definition = blocks[0]
+    else:
+        definition = metadata
+    if (definition.get("scope") != "organization" or metadata.get("crossFilters") or
+            definition.get("reportBooleanFilter") or definition.get("standardFilters")):
+        raise DataError("O relatório passou a usar filtros adicionais. Revise a equivalência SOQL.")
+    allowed = {"Opportunity.StageName": "StageName", "Opportunity.Regional__c": "Regional__c",
+               "Opportunity.Name": "Name", "Contract.Status": "Contract.Status",
+               "Opportunity.Unidade_De_Neg_cio__c": "Unidade_De_Neg_cio__c"}
+    clauses = []
+    for rule in definition.get("reportFilters", []):
+        field = allowed.get(rule.get("column"))
+        operator, value = rule.get("operator"), rule.get("value")
+        if not field or value is None:
+            raise DataError("O relatório contém um filtro novo. Revise a equivalência SOQL.")
+        values = [part.strip() for part in value.split(",")]
+        if operator == "equals":
+            clauses.append(f"{field} IN ({','.join(sql_value(v) for v in values)})")
+        elif operator == "notEqual":
+            # The report uses an outer join: absent contracts remain eligible.
+            condition = f"{field} NOT IN ({','.join(sql_value(v) for v in values)})"
+            clauses.append(f"({field} = null OR {condition})")
+        elif operator == "notContain" and field == "Name":
+            escaped = value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            clauses.append(f"(NOT {field} LIKE {sql_value('%' + escaped + '%')})")
+        else:
+            raise DataError("O relatório contém um operador novo. Revise a equivalência SOQL.")
+    dates = definition.get("standardDateFilter", {})
+    if dates.get("column") != "Opportunity.ContratoGeradoEm__c" or not clauses:
+        raise DataError("O escopo de datas do relatório mudou. Revise a consulta.")
     try:
-        total = fact["aggregates"][metadata["aggregates"].index("RowCount")]["value"]
-    except (KeyError, IndexError, ValueError):
-        raise DataError("O relatório precisa disponibilizar a contagem total e as linhas detalhadas.") from None
-    if not result.get("allData") or len(rows) != total:
-        if first == last:
-            raise DataError("O Salesforce truncou os dados de um dia. O total não será exibido incompleto.")
-        midpoint = first + (last - first) // 2
-        return (extract_period(sf, metadata, first, midpoint) +
-                extract_period(sf, metadata, midpoint + timedelta(days=1), last))
-    records = []
-    for row in rows:
-        cells = row["dataCells"]
-        identity = cells[columns.index(ID_FIELD)]["value"]
-        raw_date = cells[columns.index(DATE_FIELD)]["value"]
-        try:
-            confirmed = date.fromisoformat(str(raw_date)[:10])
-        except ValueError:
-            raise DataError("Há oportunidades com data de confirmação inválida.") from None
-        if not identity or not first <= confirmed <= last:
-            raise DataError("O relatório retornou uma oportunidade sem identificação ou fora do período.")
-        records.append((str(identity), confirmed.isoformat(), str(amount(cells[columns.index(VALUE_FIELD)]))))
-    return records
+        first, last = (date.fromisoformat(dates[key]) for key in ("startDate", "endDate"))
+    except (KeyError, ValueError, TypeError):
+        raise DataError("O relatório não informou um intervalo de datas válido.") from None
+    clauses.extend([f"ContratoGeradoEm__c >= {first.isoformat()}",
+                    f"ContratoGeradoEm__c <= {last.isoformat()}"])
+    return " AND ".join(clauses)
 
 
-@st.cache_data(ttl=300, show_spinner=False, max_entries=4)
+def sales_query(metadata, today):
+    last = min(today, DEADLINE - timedelta(days=1))
+    if last < START:
+        return None
+    # Source sheet BF = IF(AM = blank; I; AM): confirmation, otherwise sale date.
+    period = (f"((DataConfirmacaoVenda2__c >= {START} AND DataConfirmacaoVenda2__c <= {last}) OR "
+              f"(DataConfirmacaoVenda2__c = null AND DataVenda__c >= {START} AND DataVenda__c <= {last}))")
+    return ("SELECT Id, IDOportunidade__c, DataConfirmacaoVenda2__c, DataVenda__c, "
+            "Valor_Real_de_Venda__c FROM Opportunity WHERE " + report_where(metadata) +
+            " AND " + period + " ORDER BY Id ASC")
+
+
+@st.cache_data(ttl=900, show_spinner=False, max_entries=4)
 def fetch_sales(user, password, token, today_iso):
     sf = Salesforce(user, password, token)
     metadata = sf.read(f"analytics/reports/{REPORT}/describe")["reportMetadata"]
-    # Preserve official report filters, scope and Boolean expression. Never save
-    # changes to the report. Split months/days to avoid Salesforce's row limit.
     today = date.fromisoformat(today_iso)
+    query = sales_query(metadata, today)
     records = {}
-    for month in range(9, 13):
-        first = date(2026, month, 1)
-        last = min(date(2026, month, monthrange(2026, month)[1]), today)
-        if first > last:
-            continue
-        for identity, confirmed, value in extract_period(sf, metadata, first, last):
-            record = (confirmed, value)
-            if identity in records and records[identity] != record:
-                raise DataError("Uma oportunidade apareceu com datas ou valores divergentes.")
-            records[identity] = record
+    for row in sf.query(query) if query else []:
+        raw_date = row.get("DataConfirmacaoVenda2__c") or row.get("DataVenda__c")
+        try:
+            confirmed = date.fromisoformat(raw_date)
+        except (TypeError, ValueError):
+            raise DataError("Há oportunidades sem uma data válida de confirmação ou venda.") from None
+        if not START <= confirmed < DEADLINE or confirmed > today:
+            raise DataError("A consulta retornou uma venda fora do período esperado.")
+        identity = row.get("Id")
+        if not identity:
+            raise DataError("Há oportunidades sem identificação única.")
+        record = (confirmed.isoformat(), str(amount({"value": row.get("Valor_Real_de_Venda__c")})))
+        if identity in records and records[identity] != record:
+            raise DataError("Uma oportunidade apareceu com datas ou valores divergentes.")
+        records[identity] = record
     return list(records.values()), datetime.now(SAO_PAULO).strftime("%d/%m/%Y %H:%M")
 
 
