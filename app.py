@@ -268,7 +268,7 @@ def main():
     st.markdown("""<style>
     html,body,.stApp,[data-testid="stAppViewContainer"],
     [data-testid="stMain"]{height:100%;overflow:hidden!important}
-    .stApp{background:#000;color:#edf2fa;color-scheme:dark}
+    .stApp{background:#000;color:#fff;color-scheme:dark}
     .stApp::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.38;
     background-repeat:no-repeat;background-size:cover;background-position:center;z-index:0}
     [data-testid="stAppViewContainer"]{position:relative;z-index:1;background:transparent}
@@ -286,23 +286,23 @@ def main():
     .totals{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:3vw;text-align:center}
     .totals>div{background:transparent;border:0;border-radius:0;
     padding:.8vh 1vw;box-shadow:none}
-    .stat-label{font-size:clamp(14px,2.3vh,28px);color:#c9d5e6;line-height:1.2}
+    .stat-label{font-size:clamp(14px,2.3vh,28px);color:#fff;line-height:1.2}
     .stat-value{font-size:clamp(22px,4.3vh,52px);color:#fff;font-weight:650;white-space:nowrap;
     background:transparent;border:0;padding:0;margin-top:.5vh;box-shadow:none}
     .remaining{display:flex;flex-direction:column;justify-content:center;text-align:center;
-    background:linear-gradient(120deg,rgba(7,53,104,.92),rgba(8,69,137,.86));border:0;border-radius:16px;
-    box-shadow:0 8px 28px rgba(7,53,104,.22);padding:1vh 2vw;min-height:0}
-    .remaining-label{font-size:clamp(16px,2.6vh,32px);letter-spacing:.08em;text-transform:uppercase;color:#e4efff}
+    background:transparent;border:0;border-radius:0;
+    box-shadow:none;padding:1vh 2vw;min-height:0}
+    .remaining-label{font-size:clamp(16px,2.6vh,32px);letter-spacing:.08em;text-transform:uppercase;color:#fff}
     .remaining-value{font-size:clamp(32px,8vh,100px);font-weight:750;line-height:1.2;
     color:#fff;white-space:nowrap;text-shadow:none;
     background:transparent;border:0;padding:0;margin-top:.6vh;box-shadow:none}
     .pace{display:flex;justify-content:space-between;align-items:center;gap:2vw;
-    font-size:clamp(12px,2.5vh,30px);color:#c9d5e6}
+    font-size:clamp(12px,2.5vh,30px);color:#fff}
     .pace>span{background:transparent;border:0;border-radius:0;
     padding:.8vh 1vw;flex:1;text-align:center;box-shadow:none}
     .pace strong{display:inline-block;color:#fff;margin-left:10px;white-space:nowrap;
     background:transparent;border:0;padding:0;box-shadow:none}
-    .goal-progress-label{text-align:right;color:#edf2fa;font-weight:650;
+    .goal-progress-label{text-align:right;color:#fff;font-weight:650;
     font-size:clamp(12px,2vh,24px);margin-bottom:.8vh}
     .goal-track{height:1.8vh;min-height:8px;border-radius:100px;background:rgba(211,222,235,.25);overflow:hidden}
     .goal-fill{position:relative;height:100%;border-radius:100px;
@@ -318,7 +318,7 @@ def main():
     @media(max-width:640px){.pace{font-size:2.2vw}.stat-value{font-size:4.2vw}
     .remaining-value{font-size:7vw}.brand img{max-width:50vw}}
     </style>""", unsafe_allow_html=True)
-    logo = base64.b64encode((assets / "logo_direcional.png").read_bytes()).decode()
+    logo = base64.b64encode((assets / "logo_direcional_branca.png").read_bytes()).decode()
     try:
         credentials = st.secrets["salesforce"]
         user, password, token = (str(credentials.get(key, "")) for key in ("USER", "PASSWORD", "TOKEN"))
