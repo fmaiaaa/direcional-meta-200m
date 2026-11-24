@@ -13,6 +13,8 @@ from calendar import monthrange
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 import json
+import base64
+from pathlib import Path
 import socket
 import time
 from urllib.error import HTTPError, URLError
@@ -212,26 +214,35 @@ def money(value):
 
 
 def main():
-    st.set_page_config(page_title="Direcional | Meta 200 milhões", page_icon="🏠", layout="wide")
+    assets = Path(__file__).parent / "assets"
+    st.set_page_config(page_title="Direcional | Meta 200 milhões", page_icon=str(assets / "simbolo_direcional.png"), layout="wide")
     st.markdown("""<style>
     .stApp{background:#f5f7fb;color:#12345a}
-    .block-container{max-width:1400px;padding-top:3rem}
-    h1{color:#084589!important;font-size:2.2rem!important}
+    .block-container{max-width:1400px;padding-top:2rem;padding-bottom:2rem}
+    .brand{display:flex;justify-content:center;margin-bottom:28px}
+    .brand img{width:min(310px,70vw);height:auto}
+    .remaining{background:linear-gradient(120deg,#073568,#084589 75%,#165ca4);
+    border-radius:20px;padding:32px 38px;margin-bottom:24px;
+    box-shadow:0 14px 36px #07356822;border-left:7px solid #cf0035;color:white}
+    .remaining-label{font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:#d9e8fa}
+    .remaining-value{font-size:clamp(2.2rem,5vw,4.2rem);font-weight:750;line-height:1.3;margin-top:8px}
     [data-testid="stMetric"]{background:white;border:1px solid #e0e6ef;
-    border-top:4px solid #084589;border-radius:12px;padding:24px;min-height:145px}
-    [data-testid="stMetricValue"]{color:#084589;font-size:2rem}
+    border-radius:14px;padding:22px;min-height:135px;box-shadow:0 4px 16px #07356808}
+    [data-testid="stMetricValue"]{color:#084589;font-size:clamp(1.4rem,2.4vw,2rem)}
     [data-testid="stMetricLabel"]{color:#334a65}
     .stProgress{margin-top:28px}
+    .stButton button{border-radius:12px;background:#084589;border:0;min-height:52px;font-weight:650}
+    .stButton button:hover{background:#073568;color:white}
+    @media(max-width:640px){.remaining{padding:25px 20px}.block-container{padding-top:1rem}}
     </style>""", unsafe_allow_html=True)
-    st.title("Meta R$ 200 milhões")
-    if st.button("Atualizar Salesforce", type="primary"):
-        fetch_sales.clear()
+    logo = base64.b64encode((assets / "logo_direcional.png").read_bytes()).decode()
+    st.markdown(f'<div class="brand"><img src="data:image/png;base64,{logo}" alt="Direcional"></div>', unsafe_allow_html=True)
     try:
         credentials = st.secrets["salesforce"]
         user, password, token = (str(credentials.get(key, "")) for key in ("USER", "PASSWORD", "TOKEN"))
         if not all((user, password, token)):
             raise DataError("Preencha USER, PASSWORD e TOKEN na seção [salesforce] dos secrets do Streamlit.")
-    except (FileNotFoundError, KeyError):
+    except (FileNotFoundError, KeyError, DataError):
         st.error("Configure os secrets do Streamlit: seção [salesforce] com USER, PASSWORD e TOKEN.")
         st.stop()
     today = datetime.now(SAO_PAULO).date()
@@ -245,10 +256,11 @@ def main():
     except Exception:
         st.error("Não foi possível validar o retorno do Salesforce. Tente atualizar novamente.")
         st.stop()
-    row = st.columns(3)
+    st.markdown(f'<div class="remaining"><div class="remaining-label">Meta restante</div>'
+                f'<div class="remaining-value">{money(remaining)}</div></div>', unsafe_allow_html=True)
+    row = st.columns(2)
     row[0].metric("Meta", money(GOAL))
     row[1].metric("Realizado", money(realized))
-    row[2].metric("Falta para atingir", money(remaining))
     row = st.columns(2)
     row[0].metric("Dias corridos até 2027", str(days))
     row[1].metric("Meta restante por dia", money(daily) if daily is not None else "Prazo encerrado")
@@ -256,8 +268,9 @@ def main():
     st.progress(min(1.0, max(0.0, progress)), text=f"{progress:.2%} da meta".replace(".", ","))
     st.text(f"01/09/2026 a 31/12/2026 · Data Confirmação Venda 2.0 · Valor Real de Venda\n"
             f"{len(records)} vendas · Atualizado em {updated} · Dias restantes incluem hoje ({today:%d/%m/%Y})")
+    st.button("Atualizar Salesforce", type="primary", use_container_width=True,
+              on_click=fetch_sales.clear)
 
 
 if __name__ == "__main__":
     main()
-
