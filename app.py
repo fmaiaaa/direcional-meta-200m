@@ -283,7 +283,7 @@ def main():
     border:0;border-radius:0;box-shadow:none}
     [data-testid="stVerticalBlock"]{gap:0!important}
     [data-testid="stElementContainer"]:has(style){display:none}
-    .tv-dashboard{height:calc(94dvh - 40px);display:grid;min-height:0;
+    .tv-dashboard{--motion-cycle:12s;height:calc(94dvh - 40px);display:grid;min-height:0;
     grid-template-rows:1fr 1.1fr 1.9fr .8fr .65fr;gap:1vh}
     .brand{display:flex;justify-content:center;align-items:center;min-height:0}
     .brand img{max-width:30vw;max-height:9vh;width:auto;height:auto;object-fit:contain}
@@ -301,9 +301,9 @@ def main():
     color:#fff;white-space:nowrap;text-shadow:none;
     background:transparent;border:0;padding:0;margin-top:.6vh;box-shadow:none}
     .remaining-label,.remaining-value{color:#fff;-webkit-text-fill-color:#fff;
-    background:none;animation:meta-glow 8s ease-in-out infinite}
-    @keyframes meta-glow{0%,100%{text-shadow:0 2px 4px rgba(0,0,0,.45)}
-    50%{text-shadow:0 5px 14px rgba(0,0,0,.95),0 0 24px rgba(0,0,0,.65)}}
+    background:none;animation:meta-glow var(--motion-cycle) ease-in-out infinite}
+    @keyframes meta-glow{0%,65%,100%{text-shadow:0 2px 4px rgba(0,0,0,.45)}
+    82.5%{text-shadow:0 5px 14px rgba(0,0,0,.95),0 0 24px rgba(0,0,0,.65)}}
     @media(prefers-reduced-motion:reduce){.remaining-label,.remaining-value{animation:none;text-shadow:none}}
     .pace{display:flex;justify-content:space-between;align-items:center;gap:2vw;
     font-size:clamp(12px,2.5vh,30px);color:#fff}
@@ -318,8 +318,9 @@ def main():
     background:linear-gradient(90deg,#084589 0%,#cf0035 100%);overflow:hidden}
     .goal-fill::after{content:"";position:absolute;inset:0;
     background:linear-gradient(100deg,transparent 25%,#ffffff38 50%,transparent 75%);
-    transform:translateX(-100%);animation:progress-shimmer 12s ease-in-out infinite}
-    @keyframes progress-shimmer{0%,65%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+    transform:translateX(-100%);animation:progress-shimmer var(--motion-cycle) ease-in-out infinite}
+    @keyframes progress-shimmer{0%,65%{transform:translateX(-100%)}
+    82.5%{transform:translateX(0%)}100%{transform:translateX(100%)}}
     @media(prefers-reduced-motion:reduce){.goal-fill::after{animation:none;display:none}}
     .stButton button{border-radius:9px;background:#084589;color:white;border:0;
     min-height:30px;height:30px;padding:2px 12px;font-weight:650}
