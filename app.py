@@ -268,8 +268,8 @@ def main():
     st.markdown("""<style>
     html,body,.stApp,[data-testid="stAppViewContainer"],
     [data-testid="stMain"]{height:100%;overflow:hidden!important}
-    .stApp{background:#fff;color:#12345a;color-scheme:light}
-    .stApp::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.34;
+    .stApp{background:#000;color:#edf2fa;color-scheme:dark}
+    .stApp::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.38;
     background-repeat:no-repeat;background-size:cover;background-position:center;z-index:0}
     [data-testid="stAppViewContainer"]{position:relative;z-index:1;background:transparent}
     [data-testid="stHeader"],[data-testid="stToolbar"]{background:transparent!important;box-shadow:none!important}
@@ -286,8 +286,8 @@ def main():
     .totals{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:3vw;text-align:center}
     .totals>div{background:transparent;border:0;border-radius:0;
     padding:.8vh 1vw;box-shadow:none}
-    .stat-label{font-size:clamp(14px,2.3vh,28px);color:#334a65;line-height:1.2}
-    .stat-value{font-size:clamp(22px,4.3vh,52px);color:#084589;font-weight:650;white-space:nowrap;
+    .stat-label{font-size:clamp(14px,2.3vh,28px);color:#c9d5e6;line-height:1.2}
+    .stat-value{font-size:clamp(22px,4.3vh,52px);color:#fff;font-weight:650;white-space:nowrap;
     background:transparent;border:0;padding:0;margin-top:.5vh;box-shadow:none}
     .remaining{display:flex;flex-direction:column;justify-content:center;text-align:center;
     background:linear-gradient(120deg,rgba(7,53,104,.92),rgba(8,69,137,.86));border:0;border-radius:16px;
@@ -297,14 +297,14 @@ def main():
     color:#fff;white-space:nowrap;text-shadow:none;
     background:transparent;border:0;padding:0;margin-top:.6vh;box-shadow:none}
     .pace{display:flex;justify-content:space-between;align-items:center;gap:2vw;
-    font-size:clamp(12px,2.5vh,30px);color:#334a65}
+    font-size:clamp(12px,2.5vh,30px);color:#c9d5e6}
     .pace>span{background:transparent;border:0;border-radius:0;
     padding:.8vh 1vw;flex:1;text-align:center;box-shadow:none}
-    .pace strong{display:inline-block;color:#084589;margin-left:10px;white-space:nowrap;
+    .pace strong{display:inline-block;color:#fff;margin-left:10px;white-space:nowrap;
     background:transparent;border:0;padding:0;box-shadow:none}
-    .goal-progress-label{text-align:right;color:#084589;font-weight:650;
+    .goal-progress-label{text-align:right;color:#edf2fa;font-weight:650;
     font-size:clamp(12px,2vh,24px);margin-bottom:.8vh}
-    .goal-track{height:1.8vh;min-height:8px;border-radius:100px;background:rgba(211,222,235,.8);overflow:hidden}
+    .goal-track{height:1.8vh;min-height:8px;border-radius:100px;background:rgba(211,222,235,.25);overflow:hidden}
     .goal-fill{position:relative;height:100%;border-radius:100px;
     background:linear-gradient(90deg,#084589 0%,#cf0035 100%);overflow:hidden}
     .goal-fill::after{content:"";position:absolute;inset:0;
