@@ -269,6 +269,10 @@ def main():
     html,body,.stApp,[data-testid="stAppViewContainer"],
     [data-testid="stMain"]{height:100%;overflow:hidden!important}
     .stApp{background:#000;color:#fff;color-scheme:dark}
+    html,body,#root,.stApp,[data-testid="stAppViewContainer"],[data-testid="stMain"]{
+    border:0!important;outline:0!important;box-shadow:none!important}
+    html,body{margin:0!important}
+    [data-testid="stDecoration"]{display:none!important}
     .stApp::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.38;
     background-repeat:no-repeat;background-size:cover;background-position:center;z-index:0}
     [data-testid="stAppViewContainer"]{position:relative;z-index:1;background:transparent}
@@ -298,7 +302,7 @@ def main():
     background:transparent;border:0;padding:0;margin-top:.6vh;box-shadow:none}
     @supports ((background-clip:text) or (-webkit-background-clip:text)){
     .remaining-label,.remaining-value{
-    background-image:linear-gradient(110deg,#ef204f 0%,#4d91ff 50%,#ef204f 100%);
+    background-image:linear-gradient(110deg,#cf0035 0%,#084589 50%,#cf0035 100%);
     background-size:250% 100%;background-clip:text;-webkit-background-clip:text;
     color:transparent;-webkit-text-fill-color:transparent;
     animation:meta-gradient 18s ease-in-out infinite}}
