@@ -296,6 +296,14 @@ def main():
     .remaining-value{font-size:clamp(32px,8vh,100px);font-weight:750;line-height:1.2;
     color:#fff;white-space:nowrap;text-shadow:none;
     background:transparent;border:0;padding:0;margin-top:.6vh;box-shadow:none}
+    @supports ((background-clip:text) or (-webkit-background-clip:text)){
+    .remaining-label,.remaining-value{
+    background-image:linear-gradient(110deg,#ef204f 0%,#4d91ff 50%,#ef204f 100%);
+    background-size:250% 100%;background-clip:text;-webkit-background-clip:text;
+    color:transparent;-webkit-text-fill-color:transparent;
+    animation:meta-gradient 18s ease-in-out infinite}}
+    @keyframes meta-gradient{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+    @media(prefers-reduced-motion:reduce){.remaining-label,.remaining-value{animation:none}}
     .pace{display:flex;justify-content:space-between;align-items:center;gap:2vw;
     font-size:clamp(12px,2.5vh,30px);color:#fff}
     .pace>span{background:transparent;border:0;border-radius:0;
