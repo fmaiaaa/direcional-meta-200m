@@ -285,15 +285,21 @@ def main():
     .brand img{max-width:30vw;max-height:9vh;width:auto;height:auto;object-fit:contain}
     .totals{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:3vw;text-align:center}
     .stat-label{font-size:clamp(14px,2.3vh,28px);color:#334a65;line-height:1.2}
-    .stat-value{font-size:clamp(22px,4.3vh,52px);color:#084589;font-weight:650;white-space:nowrap}
+    .stat-value{font-size:clamp(22px,4.3vh,52px);color:#084589;font-weight:650;white-space:nowrap;
+    background:rgba(255,255,255,.78);border:1px solid rgba(8,69,137,.25);
+    border-radius:12px;padding:.6vh 1vw;margin-top:.5vh;box-shadow:0 3px 14px #0845890a}
     .remaining{display:flex;flex-direction:column;justify-content:center;text-align:center;
     background:transparent;border:0;box-shadow:none;padding:0;min-height:0}
     .remaining-label{font-size:clamp(16px,2.6vh,32px);letter-spacing:.08em;text-transform:uppercase;color:#084589}
     .remaining-value{font-size:clamp(32px,8vh,100px);font-weight:750;line-height:1.2;
-    color:#084589;white-space:nowrap;text-shadow:0 2px 20px #ffffffb0}
+    color:#084589;white-space:nowrap;text-shadow:0 2px 20px #ffffffb0;
+    background:rgba(255,255,255,.84);border:2px solid rgba(8,69,137,.45);
+    border-radius:16px;padding:1vh 2vw;margin-top:.6vh;box-shadow:0 5px 20px #08458912}
     .pace{display:flex;justify-content:space-between;align-items:center;gap:2vw;
     font-size:clamp(12px,2.5vh,30px);color:#334a65}
-    .pace strong{color:#084589;margin-left:10px;white-space:nowrap}
+    .pace strong{display:inline-block;color:#084589;margin-left:10px;white-space:nowrap;
+    background:rgba(255,255,255,.78);border:1px solid rgba(8,69,137,.25);
+    border-radius:9px;padding:.5vh 1vw;box-shadow:0 3px 14px #0845890a}
     .goal-progress-label{text-align:right;color:#084589;font-weight:650;
     font-size:clamp(12px,2vh,24px);margin-bottom:.8vh}
     .goal-track{height:1.8vh;min-height:8px;border-radius:100px;background:rgba(211,222,235,.8);overflow:hidden}
