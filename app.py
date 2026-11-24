@@ -222,7 +222,7 @@ def main():
     .brand{display:flex;justify-content:center;margin-bottom:28px}
     .brand img{width:min(310px,70vw);height:auto}
     .remaining{background:linear-gradient(120deg,#073568,#084589 75%,#165ca4);
-    border-radius:20px;padding:32px 38px;margin-bottom:24px;
+    border-radius:20px;padding:32px 38px;margin:20px 0 24px;
     box-shadow:0 14px 36px #07356822;border-left:7px solid #cf0035;color:white}
     .remaining-label{font-size:1rem;letter-spacing:.08em;text-transform:uppercase;color:#d9e8fa}
     .remaining-value{font-size:clamp(2.2rem,5vw,4.2rem);font-weight:750;line-height:1.3;margin-top:8px}
@@ -230,7 +230,12 @@ def main():
     border-radius:14px;padding:22px;min-height:135px;box-shadow:0 4px 16px #07356808}
     [data-testid="stMetricValue"]{color:#084589;font-size:clamp(1.4rem,2.4vw,2rem)}
     [data-testid="stMetricLabel"]{color:#334a65}
-    .stProgress{margin-top:28px}
+    .pace{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
+    margin:0 0 28px;font-size:clamp(.85rem,1.7vw,1.1rem);color:#334a65}
+    .pace strong{color:#084589;margin-left:8px;white-space:nowrap}
+    .goal-progress-label{text-align:right;color:#084589;font-weight:650;margin-bottom:8px}
+    .goal-track{height:18px;border-radius:100px;background:#e2e7f0;overflow:hidden;margin-bottom:24px}
+    .goal-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#084589 0%,#cf0035 100%)}
     .stButton button{border-radius:12px;background:#084589;border:0;min-height:52px;font-weight:650}
     .stButton button:hover{background:#073568;color:white}
     @media(max-width:640px){.remaining{padding:25px 20px}.block-container{padding-top:1rem}}
@@ -256,16 +261,21 @@ def main():
     except Exception:
         st.error("Não foi possível validar o retorno do Salesforce. Tente atualizar novamente.")
         st.stop()
-    st.markdown(f'<div class="remaining"><div class="remaining-label">Meta restante</div>'
-                f'<div class="remaining-value">{money(remaining)}</div></div>', unsafe_allow_html=True)
     row = st.columns(2)
     row[0].metric("Meta", money(GOAL))
     row[1].metric("Realizado", money(realized))
-    row = st.columns(2)
-    row[0].metric("Dias corridos até 2027", str(days))
-    row[1].metric("Meta restante por dia", money(daily) if daily is not None else "Prazo encerrado")
+    st.markdown(f'<div class="remaining"><div class="remaining-label">Meta a Atingir</div>'
+                f'<div class="remaining-value">{money(remaining)}</div></div>', unsafe_allow_html=True)
+    daily_label = money(daily) if daily is not None else "Prazo encerrado"
+    st.markdown(f'<div class="pace"><span>Dias para 2027<strong>{days}</strong></span>'
+                f'<span>Meta Diária<strong>{daily_label}</strong></span></div>', unsafe_allow_html=True)
     progress = float(realized / GOAL)
-    st.progress(min(1.0, max(0.0, progress)), text=f"{progress:.2%} da meta".replace(".", ","))
+    percent = f"{progress:.2%}".replace(".", ",")
+    width = min(100.0, max(0.0, progress * 100))
+    st.markdown(f'<div class="goal-progress-label">{percent} da meta</div>'
+                f'<div class="goal-track" role="progressbar" aria-label="Percentual da meta atingido" '
+                f'aria-valuemin="0" aria-valuemax="100" aria-valuenow="{width:.2f}">'
+                f'<div class="goal-fill" style="width:{width:.4f}%"></div></div>', unsafe_allow_html=True)
     st.text(f"01/09/2026 a 31/12/2026 · Data Confirmação Venda 2.0 · Valor Real de Venda\n"
             f"{len(records)} vendas · Atualizado em {updated} · Dias restantes incluem hoje ({today:%d/%m/%Y})")
     st.button("Atualizar Salesforce", type="primary", use_container_width=True,
@@ -274,3 +284,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
