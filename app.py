@@ -290,11 +290,11 @@ def main():
     .stat-value{font-size:clamp(22px,4.3vh,52px);color:#084589;font-weight:650;white-space:nowrap;
     background:transparent;border:0;padding:0;margin-top:.5vh;box-shadow:none}
     .remaining{display:flex;flex-direction:column;justify-content:center;text-align:center;
-    background:rgba(255,255,255,.65);border:0;border-radius:16px;
-    box-shadow:none;padding:1vh 2vw;min-height:0}
-    .remaining-label{font-size:clamp(16px,2.6vh,32px);letter-spacing:.08em;text-transform:uppercase;color:#084589}
+    background:linear-gradient(120deg,rgba(7,53,104,.92),rgba(8,69,137,.86));border:0;border-radius:16px;
+    box-shadow:0 8px 28px rgba(7,53,104,.22);padding:1vh 2vw;min-height:0}
+    .remaining-label{font-size:clamp(16px,2.6vh,32px);letter-spacing:.08em;text-transform:uppercase;color:#e4efff}
     .remaining-value{font-size:clamp(32px,8vh,100px);font-weight:750;line-height:1.2;
-    color:#084589;white-space:nowrap;text-shadow:0 2px 20px #ffffffb0;
+    color:#fff;white-space:nowrap;text-shadow:none;
     background:transparent;border:0;padding:0;margin-top:.6vh;box-shadow:none}
     .pace{display:flex;justify-content:space-between;align-items:center;gap:2vw;
     font-size:clamp(12px,2.5vh,30px);color:#334a65}
