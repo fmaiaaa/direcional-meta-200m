@@ -300,14 +300,11 @@ def main():
     .remaining-value{font-size:clamp(32px,8vh,100px);font-weight:750;line-height:1.2;
     color:#fff;white-space:nowrap;text-shadow:none;
     background:transparent;border:0;padding:0;margin-top:.6vh;box-shadow:none}
-    @supports ((background-clip:text) or (-webkit-background-clip:text)){
-    .remaining-label,.remaining-value{
-    background-image:linear-gradient(110deg,#cf0035 0%,#084589 50%,#cf0035 100%);
-    background-size:250% 100%;background-clip:text;-webkit-background-clip:text;
-    color:transparent;-webkit-text-fill-color:transparent;
-    animation:meta-gradient 18s ease-in-out infinite}}
-    @keyframes meta-gradient{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-    @media(prefers-reduced-motion:reduce){.remaining-label,.remaining-value{animation:none}}
+    .remaining-label,.remaining-value{color:#fff;-webkit-text-fill-color:#fff;
+    background:none;animation:meta-glow 8s ease-in-out infinite}
+    @keyframes meta-glow{0%,100%{text-shadow:0 0 2px rgba(255,255,255,.12)}
+    50%{text-shadow:0 0 12px rgba(255,255,255,.40),0 0 24px rgba(255,255,255,.16)}}
+    @media(prefers-reduced-motion:reduce){.remaining-label,.remaining-value{animation:none;text-shadow:none}}
     .pace{display:flex;justify-content:space-between;align-items:center;gap:2vw;
     font-size:clamp(12px,2.5vh,30px);color:#fff}
     .pace>span{background:transparent;border:0;border-radius:0;
