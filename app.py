@@ -302,8 +302,8 @@ def main():
     background:transparent;border:0;padding:0;margin-top:.6vh;box-shadow:none}
     .remaining-label,.remaining-value{color:#fff;-webkit-text-fill-color:#fff;
     background:none;animation:meta-glow 8s ease-in-out infinite}
-    @keyframes meta-glow{0%,100%{text-shadow:0 0 2px rgba(255,255,255,.12)}
-    50%{text-shadow:0 0 12px rgba(255,255,255,.40),0 0 24px rgba(255,255,255,.16)}}
+    @keyframes meta-glow{0%,100%{text-shadow:0 2px 4px rgba(0,0,0,.45)}
+    50%{text-shadow:0 5px 14px rgba(0,0,0,.95),0 0 24px rgba(0,0,0,.65)}}
     @media(prefers-reduced-motion:reduce){.remaining-label,.remaining-value{animation:none;text-shadow:none}}
     .pace{display:flex;justify-content:space-between;align-items:center;gap:2vw;
     font-size:clamp(12px,2.5vh,30px);color:#fff}
