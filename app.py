@@ -325,15 +325,15 @@ def main():
     border:0;border-radius:0;box-shadow:none}
     [data-testid="stVerticalBlock"]{gap:0!important}
     [data-testid="stElementContainer"]:has(style){display:none}
-    .tv-dashboard{--motion-cycle:12s;height:calc(94dvh - 64px);display:grid;min-height:0;
+    .tv-dashboard{--motion-cycle:12s;--indicator-size:clamp(12px,2.5vh,30px);height:calc(94dvh - 64px);display:grid;min-height:0;
     grid-template-rows:.7fr 1.25fr 1.5fr .65fr auto;gap:.45vh}
     .brand{display:flex;justify-content:center;align-items:center;min-height:0}
     .brand img{max-width:30vw;max-height:7vh;width:auto;height:auto;object-fit:contain}
-    .totals{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:3vw;text-align:center}
+    .totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:2vw;text-align:center}
     .totals>div{background:transparent;border:0;border-radius:0;
     padding:.8vh 1vw;box-shadow:none}
-    .stat-label{font-size:clamp(14px,2.3vh,28px);color:#fff;line-height:1.2}
-    .stat-value{font-size:clamp(22px,4.3vh,52px);color:#fff;font-weight:650;white-space:nowrap;
+    .stat-label{font-size:var(--indicator-size);color:#fff;line-height:1.2}
+    .stat-value{font-size:var(--indicator-size);color:#fff;font-weight:650;white-space:nowrap;
     background:transparent;border:0;padding:0;margin-top:.5vh;box-shadow:none}
     .remaining{display:flex;flex-direction:column;justify-content:center;text-align:center;
     background:transparent;border:0;border-radius:0;
@@ -347,16 +347,14 @@ def main():
     @keyframes meta-glow{0%,65%,100%{text-shadow:0 2px 4px rgba(0,0,0,.45)}
     82.5%{text-shadow:0 5px 14px rgba(0,0,0,.95),0 0 24px rgba(0,0,0,.65)}}
     @media(prefers-reduced-motion:reduce){.remaining-label,.remaining-value{animation:none;text-shadow:none}}
-    .pace{display:flex;justify-content:space-between;align-items:center;gap:2vw;
-    font-size:clamp(12px,2.5vh,30px);color:#fff}
+    .pace{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:2vw;
+    font-size:var(--indicator-size);color:#fff}
     .pace>span{background:transparent;border:0;border-radius:0;
     padding:.8vh 1vw;flex:1;text-align:center;box-shadow:none}
-    .pace strong{display:inline-block;color:#fff;margin-left:10px;white-space:nowrap;
+    .pace strong{display:block;color:#fff;margin-top:.5vh;white-space:nowrap;
     background:transparent;border:0;padding:0;box-shadow:none}
-    .forecast{margin-top:1vh;color:#fff;font-size:clamp(12px,2.3vh,28px)}
-    .forecast strong{display:block;margin-top:.3vh;white-space:nowrap}
     .goal-progress-label{text-align:right;color:#fff;font-weight:650;
-    font-size:clamp(12px,2vh,24px);margin-bottom:.8vh}
+    font-size:var(--indicator-size);margin-bottom:.8vh}
     .goal-track{height:1.8vh;min-height:8px;border-radius:100px;background:rgba(211,222,235,.25);overflow:hidden}
     .goal-fill{position:relative;height:100%;border-radius:100px;
     background:linear-gradient(90deg,#084589 0%,#cf0035 100%);overflow:hidden}
@@ -369,7 +367,7 @@ def main():
     .stButton button{border-radius:9px;background:#084589;color:white;border:0;
     min-height:30px;height:30px;padding:2px 12px;font-weight:650;margin-top:24px}
     .stButton button:hover{background:#073568;color:white}
-    @media(max-width:640px){.pace{font-size:2.2vw}.stat-value{font-size:4.2vw}
+    @media(max-width:640px){.tv-dashboard{--indicator-size:2.2vw}
     .remaining-value{font-size:7vw}.brand img{max-width:50vw}}
     </style>""", unsafe_allow_html=True)
     logo = base64.b64encode((assets / "logo_direcional_branca.png").read_bytes()).decode()
@@ -407,13 +405,15 @@ def main():
         f'<div class="totals"><div><div class="stat-label">Meta</div>'
         f'<div class="stat-value">{money(GOAL)}</div></div>'
         f'<div><div class="stat-label">Realizado</div>'
-        f'<div class="stat-value">{money(realized)}</div>'
-        f'<div class="forecast" title="{forecast_help}">Projeção final'
-        f'<strong>{money(forecast["projection"])}</strong></div></div></div>'
+        f'<div class="stat-value">{money(realized)}</div></div>'
+        f'<div title="{forecast_help}"><div class="stat-label">Projeção final</div>'
+        f'<div class="stat-value">{money(forecast["projection"])}</div></div></div>'
         f'<div class="remaining"><div class="remaining-label">Meta a Atingir</div>'
         f'<div class="remaining-value">{money(remaining)}</div></div>'
         f'<div class="pace"><span>Dias para 2027<strong>{days}</strong></span>'
-        f'<span>Meta Diária<strong>{daily_label}</strong></span></div>'
+        f'<span>Meta Diária<strong>{daily_label}</strong></span>'
+        f'<span title="Todos os dias corridos de 01/09 até ontem, inclusive fechamentos e dias sem vendas">'
+        f'Média diária<strong>{money(forecast["average"])}</strong></span></div>'
         f'<div><div class="goal-progress-label">{percent} da meta</div>'
         f'<div class="goal-track" role="progressbar" aria-label="Percentual da meta atingido" '
         f'aria-valuemin="0" aria-valuemax="100" aria-valuenow="{width:.2f}">'
