@@ -262,52 +262,69 @@ def money(value):
 
 def daily_sales(records, today):
     counts = {}
-    for confirmed, _ in records:
+    for confirmed, value in records:
         day = date.fromisoformat(confirmed)
         if START <= day < DEADLINE and day <= today:
-            counts[day] = counts.get(day, 0) + 1
-    return [(START + timedelta(days=index), counts.get(START + timedelta(days=index), 0)
+            counts[day] = counts.get(day, Decimal('0')) + Decimal(value)
+    return [(START + timedelta(days=index), counts.get(START + timedelta(days=index), Decimal('0'))
              if START + timedelta(days=index) <= today else None)
             for index in range((DEADLINE - START).days)]
 
 
-def daily_chart(records, today):
-    """Transparent SVG, one bar per day, using the same eligible sales as KPIs."""
+def daily_projection(records, today):
     series = daily_sales(records, today)
-    maximum = max((count or 0 for _, count in series), default=0)
-    positive = [count for _, count in series if count]
-    minimum = min(positive, default=0)
-    # A fixed coordinate system scales with the reserved TV grid row.
-    left, top, plot_width, plot_height = 40, 8, 1148, 150
+    observed = [value for _, value in series if value is not None]
+    realized = sum(observed, Decimal('0'))
+    average = realized / len(observed) if observed else Decimal('0')
+    # Today's sales are already realized; extrapolation starts tomorrow.
+    future_days = sum(day > today for day, _ in series)
+    return series, average, realized + average * future_days, future_days
+
+
+def daily_chart(records, today):
+    """Daily value deviations from the calendar-day mean; future total is labeled."""
+    series, average, projection, future_days = daily_projection(records, today)
+    observed = [value for _, value in series if value is not None]
+    maximum = max(observed, default=Decimal('0'))
+    amplitude = max((abs(value - average) for value in observed), default=Decimal('0'))
+    left, plot_width, center, half_height = 220, 940, 95, 82
     step = plot_width / len(series)
-    ceiling = max(1, maximum)
-    parts = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 190" '
+    parts = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 190" '
              'preserveAspectRatio="none" role="img" aria-labelledby="daily-title daily-desc">'
-             '<title id="daily-title">Vendas por dia de 01/09 a 31/12/2026</title>'
-             '<desc id="daily-desc">Quantidade de oportunidades únicas por dia. Azul indica menor '
-             'volume e vermelho maior volume. Datas futuras ficam sem barras.</desc>']
-    for ratio in (0, .5, 1):
-        y = top + plot_height * (1 - ratio)
-        parts.append(f'<line x1="{left}" y1="{y}" x2="{left + plot_width}" y2="{y}" '
-                     f'stroke="white" stroke-opacity="{.3 if ratio == 0 else .12}"/>'
-                     f'<text x="{left - 8}" y="{y + 4}" fill="white" text-anchor="end" '
-                     f'font-family="sans-serif" font-size="12">{ceiling * ratio:g}</text>')
-    for index, (day, count) in enumerate(series):
+             '<title id="daily-title">Valor diário de vendas: desvio em relação à média</title>'
+             '<desc id="daily-desc">Média em reais por dia corrido, incluindo dias passados sem vendas. '
+             'Projeção acumulada: realizado mais a média diária multiplicada pelos dias restantes '
+             'a partir de amanhã. Azul indica menor valor e vermelho maior valor.</desc>']
+    parts.append(f'<line x1="{left}" y1="{center}" x2="{left + plot_width}" y2="{center}" '
+                 'stroke="white" stroke-opacity=".55"/>'
+                 f'<text x="{left - 14}" y="{center - 8}" fill="white" text-anchor="end" '
+                 'font-family="sans-serif" font-size="15">Média diária</text>'
+                 f'<text x="{left - 14}" y="{center + 15}" fill="white" text-anchor="end" '
+                 f'font-family="sans-serif" font-size="18">{money(average)}</text>'
+                 f'<text x="{left + plot_width + 14}" y="{center - 8}" fill="white" '
+                 'font-family="sans-serif" font-size="15">Projeção acumulada</text>'
+                 f'<text x="{left + plot_width + 14}" y="{center + 15}" fill="white" '
+                 f'font-family="sans-serif" font-size="18">{money(projection)}</text>')
+    for index, (day, value) in enumerate(series):
         x = left + index * step
-        if count:
-            weight = (count - minimum) / (maximum - minimum) if maximum > minimum else 0
+        if value is not None:
+            deviation = value - average
+            weight = float(value / maximum) if maximum else 0
             color = '#%02x%02x%02x' % tuple(round(a + (b - a) * weight)
                                              for a, b in zip((8, 69, 137), (207, 0, 53)))
-            height = plot_height * count / ceiling
-            parts.append(f'<rect x="{x + .7:.2f}" y="{top + plot_height - height:.2f}" '
-                         f'width="{step - 1.4:.2f}" height="{height:.2f}" rx="1" fill="{color}"/>')
-        tooltip = f'{day:%d/%m}: {count} vendas' if count is not None else f'{day:%d/%m}: data futura'
-        parts.append(f'<rect x="{x:.2f}" y="{top}" width="{step:.2f}" '
-                     f'height="{plot_height}" fill="transparent"><title>{tooltip}</title></rect>')
-        if day.day in (1, 15) or day == DEADLINE - timedelta(days=1):
-            anchor = 'end' if day == DEADLINE - timedelta(days=1) else 'middle'
-            parts.append(f'<text x="{x + step / 2:.2f}" y="181" fill="white" '
-                         f'text-anchor="{anchor}" font-family="sans-serif" font-size="12">{day:%d/%m}</text>')
+            height = float(abs(deviation) / amplitude) * half_height if amplitude else 0
+            y = center - height if deviation > 0 else center
+            if height:
+                parts.append(f'<rect x="{x + .6:.2f}" y="{y:.2f}" '
+                             f'width="{step - 1.2:.2f}" height="{height:.2f}" rx="1" fill="{color}"/>')
+            tooltip = (f'{day:%d/%m/%Y}: {money(value)}; média diária: {money(average)}; '
+                       f'desvio: {"+" if deviation > 0 else ""}{money(deviation)}')
+        else:
+            tooltip = (f'{day:%d/%m/%Y}: data futura; estimativa diária: {money(average)}; '
+                       f'projeção acumulada em 31/12/2026: {money(projection)} '
+                       f'(realizado + média × {future_days} dias futuros)')
+        parts.append(f'<rect x="{x:.2f}" y="5" width="{step:.2f}" '
+                     'height="180" fill="transparent"><title>' + tooltip + '</title></rect>')
     parts.append('</svg>')
     return '<div class="daily-chart">' + ''.join(parts) + '</div>'
 
