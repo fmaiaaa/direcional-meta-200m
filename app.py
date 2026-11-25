@@ -286,8 +286,11 @@ def daily_chart(records, today):
     series, average, projection, future_days = daily_projection(records, today)
     observed = [value for _, value in series if value is not None]
     maximum = max(observed, default=Decimal('0'))
-    amplitude = max((abs(value - average) for value in observed), default=Decimal('0'))
-    left, plot_width, center, half_height = 220, 940, 95, 82
+    minimum = min(observed, default=Decimal('0'))
+    spread = maximum - minimum
+    left, plot_width, plot_height = 220, 940, 174
+    scale = plot_height / float(spread) if spread else 0
+    center = 8 + float(maximum - average) * scale if spread else 95
     step = plot_width / len(series)
     parts = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 190" '
              'preserveAspectRatio="none" role="img" aria-labelledby="daily-title daily-desc">'
@@ -297,13 +300,9 @@ def daily_chart(records, today):
              'a partir de amanhã. Azul indica menor valor e vermelho maior valor.</desc>']
     parts.append(f'<line x1="{left}" y1="{center}" x2="{left + plot_width}" y2="{center}" '
                  'stroke="white" stroke-opacity=".55"/>'
-                 f'<text x="{left - 14}" y="{center - 8}" fill="white" text-anchor="end" '
-                 'font-family="sans-serif" font-size="15">Média diária</text>'
-                 f'<text x="{left - 14}" y="{center + 15}" fill="white" text-anchor="end" '
+                 f'<text x="0" y="{center + 5}" fill="white" text-anchor="start" '
                  f'font-family="sans-serif" font-size="18">{money(average)}</text>'
-                 f'<text x="{left + plot_width + 14}" y="{center - 8}" fill="white" '
-                 'font-family="sans-serif" font-size="15">Projeção acumulada</text>'
-                 f'<text x="{left + plot_width + 14}" y="{center + 15}" fill="white" '
+                 f'<text x="1400" y="{center + 5}" fill="white" text-anchor="end" '
                  f'font-family="sans-serif" font-size="18">{money(projection)}</text>')
     for index, (day, value) in enumerate(series):
         x = left + index * step
@@ -312,7 +311,7 @@ def daily_chart(records, today):
             weight = float(value / maximum) if maximum else 0
             color = '#%02x%02x%02x' % tuple(round(a + (b - a) * weight)
                                              for a, b in zip((8, 69, 137), (207, 0, 53)))
-            height = float(abs(deviation) / amplitude) * half_height if amplitude else 0
+            height = float(abs(deviation)) * scale
             y = center - height if deviation > 0 else center
             if height:
                 parts.append(f'<rect x="{x + .6:.2f}" y="{y:.2f}" '
@@ -352,8 +351,8 @@ def main():
     border:0;border-radius:0;box-shadow:none}
     [data-testid="stVerticalBlock"]{gap:0!important}
     [data-testid="stElementContainer"]:has(style){display:none}
-    .tv-dashboard{--motion-cycle:12s;height:calc(94dvh - 40px);display:grid;min-height:0;
-    grid-template-rows:.7fr .9fr 1.5fr .65fr 1.6fr .55fr;gap:.7vh}
+    .tv-dashboard{--motion-cycle:12s;height:calc(94dvh - 64px);display:grid;min-height:0;
+    grid-template-rows:.7fr .9fr 1.5fr .65fr 1.6fr auto;gap:.45vh}
     .brand{display:flex;justify-content:center;align-items:center;min-height:0}
     .brand img{max-width:30vw;max-height:7vh;width:auto;height:auto;object-fit:contain}
     .totals{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:3vw;text-align:center}
@@ -394,7 +393,7 @@ def main():
     82.5%{transform:translateX(0%)}100%{transform:translateX(100%)}}
     @media(prefers-reduced-motion:reduce){.goal-fill::after{animation:none;display:none}}
     .stButton button{border-radius:9px;background:#084589;color:white;border:0;
-    min-height:30px;height:30px;padding:2px 12px;font-weight:650}
+    min-height:30px;height:30px;padding:2px 12px;font-weight:650;margin-top:24px}
     .stButton button:hover{background:#073568;color:white}
     @media(max-width:640px){.pace{font-size:2.2vw}.stat-value{font-size:4.2vw}
     .remaining-value{font-size:7vw}.brand img{max-width:50vw}}
