@@ -326,7 +326,7 @@ def main():
     [data-testid="stVerticalBlock"]{gap:0!important}
     [data-testid="stElementContainer"]:has(style){display:none}
     .tv-dashboard{--motion-cycle:12s;height:calc(94dvh - 64px);display:grid;min-height:0;
-    grid-template-rows:.7fr .9fr 1.5fr .65fr .65fr auto;gap:.45vh}
+    grid-template-rows:.7fr 1.25fr 1.5fr .65fr auto;gap:.45vh}
     .brand{display:flex;justify-content:center;align-items:center;min-height:0}
     .brand img{max-width:30vw;max-height:7vh;width:auto;height:auto;object-fit:contain}
     .totals{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:3vw;text-align:center}
@@ -353,9 +353,8 @@ def main():
     padding:.8vh 1vw;flex:1;text-align:center;box-shadow:none}
     .pace strong{display:inline-block;color:#fff;margin-left:10px;white-space:nowrap;
     background:transparent;border:0;padding:0;box-shadow:none}
-    .forecast{display:flex;justify-content:space-between;align-items:center;gap:2vw;color:#fff}
-    .forecast>span{flex:1;text-align:center;font-size:clamp(12px,2.3vh,28px)}
-    .forecast strong{margin-left:10px;white-space:nowrap}
+    .forecast{margin-top:1vh;color:#fff;font-size:clamp(12px,2.3vh,28px)}
+    .forecast strong{display:block;margin-top:.3vh;white-space:nowrap}
     .goal-progress-label{text-align:right;color:#fff;font-weight:650;
     font-size:clamp(12px,2vh,24px);margin-bottom:.8vh}
     .goal-track{height:1.8vh;min-height:8px;border-radius:100px;background:rgba(211,222,235,.25);overflow:hidden}
@@ -408,14 +407,13 @@ def main():
         f'<div class="totals"><div><div class="stat-label">Meta</div>'
         f'<div class="stat-value">{money(GOAL)}</div></div>'
         f'<div><div class="stat-label">Realizado</div>'
-        f'<div class="stat-value">{money(realized)}</div></div></div>'
+        f'<div class="stat-value">{money(realized)}</div>'
+        f'<div class="forecast" title="{forecast_help}">Projeção final'
+        f'<strong>{money(forecast["projection"])}</strong></div></div></div>'
         f'<div class="remaining"><div class="remaining-label">Meta a Atingir</div>'
         f'<div class="remaining-value">{money(remaining)}</div></div>'
         f'<div class="pace"><span>Dias para 2027<strong>{days}</strong></span>'
         f'<span>Meta Diária<strong>{daily_label}</strong></span></div>'
-        f'<div class="forecast" title="{forecast_help}">'
-        f'<span>Média diária<strong>{money(forecast["average"])}</strong></span>'
-        f'<span>Projeção final<strong>{money(forecast["projection"])}</strong></span></div>'
         f'<div><div class="goal-progress-label">{percent} da meta</div>'
         f'<div class="goal-track" role="progressbar" aria-label="Percentual da meta atingido" '
         f'aria-valuemin="0" aria-valuemax="100" aria-valuenow="{width:.2f}">'
