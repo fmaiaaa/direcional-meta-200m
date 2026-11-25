@@ -326,13 +326,14 @@ def main():
     [data-testid="stVerticalBlock"]{gap:0!important}
     [data-testid="stElementContainer"]:has(style){display:none}
     .tv-dashboard{--motion-cycle:12s;--indicator-size:clamp(12px,2.5vh,30px);height:calc(94dvh - 64px);display:grid;min-height:0;
-    grid-template-rows:.7fr 1.25fr 1.5fr .65fr auto;gap:.45vh}
+    grid-template-rows:.7fr 1fr 1.5fr 1fr auto;gap:.45vh}
+    .totals,.pace{line-height:1.4}
     .brand{display:flex;justify-content:center;align-items:center;min-height:0}
     .brand img{max-width:30vw;max-height:7vh;width:auto;height:auto;object-fit:contain}
     .totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:2vw;text-align:center}
     .totals>div{background:transparent;border:0;border-radius:0;
     padding:.8vh 1vw;box-shadow:none}
-    .stat-label{font-size:var(--indicator-size);color:#fff;line-height:1.2}
+    .stat-label{font-size:var(--indicator-size);color:#fff;line-height:1.4}
     .stat-value{font-size:var(--indicator-size);color:#fff;font-weight:650;white-space:nowrap;
     background:transparent;border:0;padding:0;margin-top:.5vh;box-shadow:none}
     .remaining{display:flex;flex-direction:column;justify-content:center;text-align:center;
