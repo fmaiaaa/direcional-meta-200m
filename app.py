@@ -271,33 +271,50 @@ def daily_sales(records, today):
             for index in range((DEADLINE - START).days)]
 
 
+def is_month_end(day):
+    return (day + timedelta(days=1)).day == 1
+
+
+def projection_rates(series):
+    ordinary = [value for day, value in series if value is not None and not is_month_end(day)]
+    closings = [value for day, value in series if value is not None and is_month_end(day)]
+    ordinary_mean = sum(ordinary, Decimal('0')) / len(ordinary) if ordinary else Decimal('0')
+    # Before the first observed month-end, use the ordinary-day mean as fallback.
+    closing_mean = sum(closings, Decimal('0')) / len(closings) if closings else ordinary_mean
+    return ordinary_mean, closing_mean
+
+
 def daily_projection(records, today):
     series = daily_sales(records, today)
     observed = [value for _, value in series if value is not None]
     realized = sum(observed, Decimal('0'))
-    average = realized / len(observed) if observed else Decimal('0')
+    average, closing_mean = projection_rates(series)
     # Today's sales are already realized; extrapolation starts tomorrow.
     future_days = sum(day > today for day, _ in series)
-    return series, average, realized + average * future_days, future_days
+    future_value = sum((closing_mean if is_month_end(day) else average
+                        for day, _ in series if day > today), Decimal('0'))
+    return series, average, realized + future_value, future_days
 
 
 def daily_chart(records, today):
     """Daily value deviations from the calendar-day mean; future total is labeled."""
     series, average, projection, future_days = daily_projection(records, today)
+    _, closing_mean = projection_rates(series)
     observed = [value for _, value in series if value is not None]
     maximum = max(observed, default=Decimal('0'))
     minimum = min(observed, default=Decimal('0'))
     spread = maximum - minimum
-    left, plot_width, plot_height = 220, 940, 174
+    left, plot_width, plot_height = 220, 940, 82
     scale = plot_height / float(spread) if spread else 0
-    center = 8 + float(maximum - average) * scale if spread else 95
+    center = 8 + float(maximum - average) * scale if spread else 50
     step = plot_width / len(series)
-    parts = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 190" '
+    parts = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 100" '
              'preserveAspectRatio="none" role="img" aria-labelledby="daily-title daily-desc">'
              '<title id="daily-title">Valor diário de vendas: desvio em relação à média</title>'
-             '<desc id="daily-desc">Média em reais por dia corrido, incluindo dias passados sem vendas. '
-             'Projeção acumulada: realizado mais a média diária multiplicada pelos dias restantes '
-             'a partir de amanhã. Azul indica menor valor e vermelho maior valor.</desc>']
+             '<desc id="daily-desc">Referência: média dos dias comuns, incluindo dias sem vendas. '
+             'Projeção acumulada: realizado mais a média dos dias comuns para dias comuns futuros '
+             'e a média dos fechamentos observados para cada último dia de mês futuro, a partir '
+             'de amanhã. Azul indica menor valor e vermelho maior valor.</desc>']
     parts.append(f'<line x1="{left}" y1="{center}" x2="{left + plot_width}" y2="{center}" '
                  'stroke="white" stroke-opacity=".55"/>'
                  f'<text x="0" y="{center + 5}" fill="white" text-anchor="start" '
@@ -316,14 +333,16 @@ def daily_chart(records, today):
             if height:
                 parts.append(f'<rect x="{x + .6:.2f}" y="{y:.2f}" '
                              f'width="{step - 1.2:.2f}" height="{height:.2f}" rx="1" fill="{color}"/>')
-            tooltip = (f'{day:%d/%m/%Y}: {money(value)}; média diária: {money(average)}; '
+            tooltip = (f'{day:%d/%m/%Y}: {money(value)}; média dos dias comuns: {money(average)}; '
                        f'desvio: {"+" if deviation > 0 else ""}{money(deviation)}')
         else:
-            tooltip = (f'{day:%d/%m/%Y}: data futura; estimativa diária: {money(average)}; '
+            estimate = closing_mean if is_month_end(day) else average
+            group = 'fechamento de mês' if is_month_end(day) else 'dia comum'
+            tooltip = (f'{day:%d/%m/%Y}: {group}; estimativa diária: {money(estimate)}; '
                        f'projeção acumulada em 31/12/2026: {money(projection)} '
-                       f'(realizado + média × {future_days} dias futuros)')
+                       f'(realizado + projeção de {future_days} dias futuros por tipo de dia)')
         parts.append(f'<rect x="{x:.2f}" y="5" width="{step:.2f}" '
-                     'height="180" fill="transparent"><title>' + tooltip + '</title></rect>')
+                     'height="90" fill="transparent"><title>' + tooltip + '</title></rect>')
     parts.append('</svg>')
     return '<div class="daily-chart">' + ''.join(parts) + '</div>'
 
@@ -352,7 +371,7 @@ def main():
     [data-testid="stVerticalBlock"]{gap:0!important}
     [data-testid="stElementContainer"]:has(style){display:none}
     .tv-dashboard{--motion-cycle:12s;height:calc(94dvh - 64px);display:grid;min-height:0;
-    grid-template-rows:.7fr .9fr 1.5fr .65fr 1.6fr auto;gap:.45vh}
+    grid-template-rows:.7fr .9fr 1.5fr .65fr clamp(64px,10vh,100px) auto;gap:.45vh}
     .brand{display:flex;justify-content:center;align-items:center;min-height:0}
     .brand img{max-width:30vw;max-height:7vh;width:auto;height:auto;object-fit:contain}
     .totals{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:3vw;text-align:center}
