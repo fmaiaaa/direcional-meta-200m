@@ -276,41 +276,19 @@ def is_month_end(day):
 
 
 def projection_summary(records, today):
-    """Train through yesterday; estimate monthly growth at comparable cutoffs.
+    """Train through yesterday, separating ordinary days from month-ends.
 
-    Only fully closed months enter the trend. All closed calendar days enter
-    the level estimates, including zero-sale days. Normalize historical levels
-    to the current month before extrapolating to avoid applying growth twice.
-    Actual sales today enter the realized total, never the fitted means/trend.
+    No monthly trend or growth adjustment. Zero-sale closed days enter the
+    averages. Today's actual sales enter realized, never the fitted means.
     """
     cutoff = today - timedelta(days=1)
     series = daily_sales(records, cutoff)
     observed = [(day, value) for day, value in series if value is not None]
     mean = (sum((value for _, value in observed), Decimal('0')) / len(observed)
             if observed else Decimal('0'))
-    month_index = lambda day: day.year * 12 + day.month
-    closed_months = {}
-    for day, value in observed:
-        # The last day must have already occurred before today's date.
-        next_month = (day.replace(day=28) + timedelta(days=4)).replace(day=1)
-        if next_month <= today:
-            key = month_index(day)
-            closed_months.setdefault(key, Decimal('0'))
-            if day.day <= cutoff.day:
-                closed_months[key] += value
-    keys = sorted(closed_months)
-    ratios = [closed_months[b] / closed_months[a] for a, b in zip(keys, keys[1:])
-              if b == a + 1 and closed_months[a] > 0 and closed_months[b] > 0]
-    factor = Decimal('1')
-    if ratios:
-        for ratio in ratios:
-            factor *= ratio
-        factor = factor ** (Decimal('1') / len(ratios))
-    anchor = month_index(today)
     ordinary, closings = [], []
     for day, value in observed:
-        adjusted = value / (factor ** (month_index(day) - anchor))
-        (closings if is_month_end(day) else ordinary).append(adjusted)
+        (closings if is_month_end(day) else ordinary).append(value)
     ordinary_mean = sum(ordinary, Decimal('0')) / len(ordinary) if ordinary else Decimal('0')
     closing_mean = sum(closings, Decimal('0')) / len(closings) if closings else ordinary_mean
     realized = totals(records, today)[0]
@@ -318,9 +296,9 @@ def projection_summary(records, today):
     for day, _ in series:
         if day > today:
             level = closing_mean if is_month_end(day) else ordinary_mean
-            future += level * factor ** (month_index(day) - anchor)
-    return {'average': mean, 'projection': realized + future, 'factor': factor,
-            'cutoff': cutoff, 'months': len(keys), 'trend_pairs': len(ratios),
+            future += level
+    return {'average': mean, 'projection': realized + future,
+            'cutoff': cutoff,
             'ordinary_mean': ordinary_mean, 'closing_mean': closing_mean}
 
 
@@ -420,10 +398,8 @@ def main():
     percent = f"{progress:.2%}".replace(".", ",")
     width = min(100.0, max(0.0, progress * 100))
     forecast = projection_summary(records, today)
-    trend_label = f'{(forecast["factor"] - 1) * 100:+.2f}%'.replace('.', ',')
     forecast_help = (f'Médias até {forecast["cutoff"]:%d/%m/%Y}, incluindo dias sem vendas. '
-                     f'Tendência mensal: {trend_label}, calculada em {forecast["trend_pairs"]} '
-                     f'comparações de meses fechados até o dia {forecast["cutoff"].day}. '
+                     'Projeção sem tendência mensal. '
                      'Dias comuns e fechamentos de mês estimados separadamente. '
                      'Realizado de hoje somado uma única vez; projeção futura começa amanhã.')
     st.markdown(
