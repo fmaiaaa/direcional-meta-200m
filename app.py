@@ -260,6 +260,58 @@ def money(value):
     return "R$ " + f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+def daily_sales(records, today):
+    counts = {}
+    for confirmed, _ in records:
+        day = date.fromisoformat(confirmed)
+        if START <= day < DEADLINE and day <= today:
+            counts[day] = counts.get(day, 0) + 1
+    return [(START + timedelta(days=index), counts.get(START + timedelta(days=index), 0)
+             if START + timedelta(days=index) <= today else None)
+            for index in range((DEADLINE - START).days)]
+
+
+def daily_chart(records, today):
+    """Transparent SVG, one bar per day, using the same eligible sales as KPIs."""
+    series = daily_sales(records, today)
+    maximum = max((count or 0 for _, count in series), default=0)
+    positive = [count for _, count in series if count]
+    minimum = min(positive, default=0)
+    # A fixed coordinate system scales with the reserved TV grid row.
+    left, top, plot_width, plot_height = 40, 8, 1148, 150
+    step = plot_width / len(series)
+    ceiling = max(1, maximum)
+    parts = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 190" '
+             'preserveAspectRatio="none" role="img" aria-labelledby="daily-title daily-desc">'
+             '<title id="daily-title">Vendas por dia de 01/09 a 31/12/2026</title>'
+             '<desc id="daily-desc">Quantidade de oportunidades únicas por dia. Azul indica menor '
+             'volume e vermelho maior volume. Datas futuras ficam sem barras.</desc>']
+    for ratio in (0, .5, 1):
+        y = top + plot_height * (1 - ratio)
+        parts.append(f'<line x1="{left}" y1="{y}" x2="{left + plot_width}" y2="{y}" '
+                     f'stroke="white" stroke-opacity="{.3 if ratio == 0 else .12}"/>'
+                     f'<text x="{left - 8}" y="{y + 4}" fill="white" text-anchor="end" '
+                     f'font-family="sans-serif" font-size="12">{ceiling * ratio:g}</text>')
+    for index, (day, count) in enumerate(series):
+        x = left + index * step
+        if count:
+            weight = (count - minimum) / (maximum - minimum) if maximum > minimum else 0
+            color = '#%02x%02x%02x' % tuple(round(a + (b - a) * weight)
+                                             for a, b in zip((8, 69, 137), (207, 0, 53)))
+            height = plot_height * count / ceiling
+            parts.append(f'<rect x="{x + .7:.2f}" y="{top + plot_height - height:.2f}" '
+                         f'width="{step - 1.4:.2f}" height="{height:.2f}" rx="1" fill="{color}"/>')
+        tooltip = f'{day:%d/%m}: {count} vendas' if count is not None else f'{day:%d/%m}: data futura'
+        parts.append(f'<rect x="{x:.2f}" y="{top}" width="{step:.2f}" '
+                     f'height="{plot_height}" fill="transparent"><title>{tooltip}</title></rect>')
+        if day.day in (1, 15) or day == DEADLINE - timedelta(days=1):
+            anchor = 'end' if day == DEADLINE - timedelta(days=1) else 'middle'
+            parts.append(f'<text x="{x + step / 2:.2f}" y="181" fill="white" '
+                         f'text-anchor="{anchor}" font-family="sans-serif" font-size="12">{day:%d/%m}</text>')
+    parts.append('</svg>')
+    return '<div class="daily-chart">' + ''.join(parts) + '</div>'
+
+
 def main():
     assets = Path(__file__).parent / "assets"
     st.set_page_config(page_title="Campanhas Direcional RJ", page_icon=str(assets / "simbolo_direcional.png"), layout="wide")
@@ -284,9 +336,9 @@ def main():
     [data-testid="stVerticalBlock"]{gap:0!important}
     [data-testid="stElementContainer"]:has(style){display:none}
     .tv-dashboard{--motion-cycle:12s;height:calc(94dvh - 40px);display:grid;min-height:0;
-    grid-template-rows:1fr 1.1fr 1.9fr .8fr .65fr;gap:1vh}
+    grid-template-rows:.7fr .9fr 1.5fr .65fr 1.6fr .55fr;gap:.7vh}
     .brand{display:flex;justify-content:center;align-items:center;min-height:0}
-    .brand img{max-width:30vw;max-height:9vh;width:auto;height:auto;object-fit:contain}
+    .brand img{max-width:30vw;max-height:7vh;width:auto;height:auto;object-fit:contain}
     .totals{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:3vw;text-align:center}
     .totals>div{background:transparent;border:0;border-radius:0;
     padding:.8vh 1vw;box-shadow:none}
@@ -297,7 +349,7 @@ def main():
     background:transparent;border:0;border-radius:0;
     box-shadow:none;padding:1vh 2vw;min-height:0}
     .remaining-label{font-size:clamp(16px,2.6vh,32px);letter-spacing:.08em;text-transform:uppercase;color:#fff}
-    .remaining-value{font-size:clamp(32px,8vh,100px);font-weight:750;line-height:1.2;
+    .remaining-value{font-size:clamp(30px,6.8vh,90px);font-weight:750;line-height:1.2;
     color:#fff;white-space:nowrap;text-shadow:none;
     background:transparent;border:0;padding:0;margin-top:.6vh;box-shadow:none}
     .remaining-label,.remaining-value{color:#fff;-webkit-text-fill-color:#fff;
@@ -311,6 +363,8 @@ def main():
     padding:.8vh 1vw;flex:1;text-align:center;box-shadow:none}
     .pace strong{display:inline-block;color:#fff;margin-left:10px;white-space:nowrap;
     background:transparent;border:0;padding:0;box-shadow:none}
+    .daily-chart{min-height:0;width:100%;height:100%;background:transparent}
+    .daily-chart svg{display:block;width:100%;height:100%;overflow:visible}
     .goal-progress-label{text-align:right;color:#fff;font-weight:650;
     font-size:clamp(12px,2vh,24px);margin-bottom:.8vh}
     .goal-track{height:1.8vh;min-height:8px;border-radius:100px;background:rgba(211,222,235,.25);overflow:hidden}
@@ -363,6 +417,7 @@ def main():
         f'<div class="remaining-value">{money(remaining)}</div></div>'
         f'<div class="pace"><span>Dias para 2027<strong>{days}</strong></span>'
         f'<span>Meta Diária<strong>{daily_label}</strong></span></div>'
+        f'{daily_chart(records, today)}'
         f'<div><div class="goal-progress-label">{percent} da meta</div>'
         f'<div class="goal-track" role="progressbar" aria-label="Percentual da meta atingido" '
         f'aria-valuemin="0" aria-valuemax="100" aria-valuenow="{width:.2f}">'
